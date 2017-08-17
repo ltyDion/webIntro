@@ -1,0 +1,438 @@
+<?php
+    session_start();
+
+
+    if (array_key_exists("logout", $_GET)) {
+        
+        session_unset();
+        //setcookie("id", "", time() - 60*60);
+        //$_COOKIE["id"] = "";    
+        session_destroy();
+    
+    } else if ((array_key_exists("id", $_SESSION) AND $_SESSION['id']) ) {
+        header("Location: dairy.php");
+        
+    }  
+    
+	// connect to the database
+    $link = mysqli_connect("shareddb1c.hosting.stackcp.net","yourdb-32305c02","dion970918","yourdb-32305c02");
+
+	if(mysqli_connect_error()){
+
+		die($link);
+
+	}
+	
+	// checking the submitted sign up info
+	
+	$error = "";
+
+
+	if (array_key_exists("submit", $_POST)) {
+	
+    if ($_POST['signUp'] == '1'){ // sign up
+        if ($_POST['email'] == ''){
+
+        	$error .= "<p>email address is required.</p>";
+
+        } else if ($_POST['password'] == ''){
+
+        	$error .= "<p>password is required.</p>";
+
+        } else if ($_POST['passwordConfirm'] == '' || $_POST['passwordConfirm'] != $_POST['password']){
+          	$error .= "<p>Confirm password does not match the password.</p>";
+        } else {
+
+        	$query = "SELECT `id` FROM `users2` WHERE email = 
+        	'".mysqli_real_escape_string($link, $_POST['email'])."'";
+
+        	$result = mysqli_query($link, $query);
+
+        	if(mysqli_num_rows($result) > 0){ // email address has been signed up before
+
+        		$error .= "<p>That email address has already been taken.</p>";
+
+        	} else { // sign users up
+
+                $query = "INSERT INTO `users2` (`email`, `password`, `name`) VALUES ('".mysqli_real_escape_string($link, $_POST['email'])."', '".mysqli_real_escape_string($link, $_POST['password'])."', '".mysqli_real_escape_string($link, $_POST['SignName'])."')";
+
+        		if (mysqli_query($link, $query)){
+
+					$query = "UPDATE `users2` SET password = '".md5(md5(mysqli_insert_id($link)).$_POST['password'])."' WHERE id = ".mysqli_insert_id($link)." LIMIT 1";
+                        
+                    $id = mysqli_insert_id($link);
+                    
+					if (session_status() == PHP_SESSION_NONE) {
+    					session_start();
+					}
+                    
+                    $_SESSION['id'] = $id;
+                        
+                    mysqli_query($link, $query);
+            
+                    header("Location: dairy.php");
+
+        		} else {
+
+        			$error .= "<p>There is a problem signing you up. Please try later.</p>";
+
+        		}
+
+        	}
+
+        }
+
+    } else  { // log in
+      	$loginError="";
+      	if ($_POST['loginName'] && $_POST['loginPassword']){
+    	$query = "SELECT * FROM `users2` WHERE email = '".mysqli_real_escape_string($link, $_POST['loginName'])."'";
+                
+                    $result = mysqli_query($link, $query);
+                
+                    $row = mysqli_fetch_array($result);
+                
+                    if (isset($row)) {
+                        
+                        $hashedPassword = md5(md5($row['id']).$_POST['loginPassword']);
+                        
+                        if ($hashedPassword == $row['password']) {
+                        
+						if (session_status() == PHP_SESSION_NONE) {
+   							 session_start();
+						}
+                            
+                            $_SESSION['id'] = $row['id'];
+
+                            header("Location: dairy.php");
+                                
+                        } else {
+                            
+                            $error .= "That email/password combination could not be found.";
+                            
+                        }
+                        
+                    } else {
+                        
+                        $error .= "That email/password combination could not be found.";
+                        
+                    }
+                    
+        } /*else {
+        	$loginError = "Please enter email address as login name and password.";
+        }  */ 
+    }
+    
+    
+    }// end of if (post)
+
+
+?> 
+
+<html>
+    <head>
+        <title>Dion and His Single Friends</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <style type="text/css">
+            
+            body {
+
+                font-family: helvetica, sans-serif;
+                font-size:70%;
+				background-image: url("universe2.jpg");
+            }
+
+            input {
+
+                padding: 5px 5px 12px 5px;
+                font-size: 15px;
+                border-radius: 5px;
+                border: 1px solid grey;
+                width:100px;
+                height:15px;
+
+                }
+            
+            label {
+                
+                position: relative;
+                //top:px;
+                width:100px;
+                float: left;
+                
+            }
+            
+            #SignUpWrapper {
+                
+                width: 400px;
+                margin:0 auto;
+                
+                
+            }
+
+            #loginWrapper {
+                width: 400px;
+              	
+              	margin:0 auto;
+                
+               
+
+            }
+            
+            .form-element {
+                
+                margin-bottom: 5px;
+                display: none;
+                margin-left:100px;
+              
+            }
+
+            .login-form-element{
+
+                margin-bottom: 5px;
+                display: none;
+                margin-left:100px;
+
+            }
+            
+            #submitButton {
+                
+                width: 100px;
+                height:30px;
+                margin-left: 100px;
+            }
+          
+          #loginSubmit{
+          		width: 100px;
+                height:30px;
+                margin-left: 100px;
+          }
+            
+            #errorMessage {
+                
+                color: red;
+                font-size: 90% !important;
+                
+            }
+            
+            #successMessage {
+                
+                color: green;
+                font-size: 90% !important;
+                display:none;
+                margin-bottom:20px;
+                
+            }
+            
+            #sign{
+                font-size:120%;
+				text-align: center;
+            }
+            #validate{
+            	
+				margin-left: auto;
+    			margin-right: auto; 
+    			width: 500px;
+              	
+				background-color: Gainsboro;
+				//position:absolute;
+            }
+          #outter{
+          	display: table;
+            position: absolute; 
+            height: 100%; 
+            width: 100%;
+          }
+          #middle{
+          	display: table-cell;
+            vertical-align: middle;
+          }
+          
+        </style>
+        
+    </head>
+
+    <body>
+      	<div id = "outter">
+      	<div id = "middle">
+        <div id = "validate">
+          
+        <div id="sign">
+			<h1>Story of Dion and His <strike>Single</strike> Friends.</h1>
+            <h2>Please <sup onmouseover="Emphasis(this)" onmouseout="Normal(this)" id = "signUp">Sign Up</sup> or <sup onmouseover="Emphasis(this)" onmouseout="Normal(this)" id = "logIn">Login In</sup> into the website.</h2>
+
+        </div>
+		<div>
+        <form id="SignUpWrapper" method="post">
+            
+            <div id="successMessage">You've successfully created an account. You are automatically logged in.</div>
+            
+            <div class="form-element">
+        
+                <label for="email">Email</label>
+                <input type="text" name="email" id="email" placeholder = "eg. yourname@gmail.com">
+                
+            </div>
+
+            <div class="form-element">
+        
+                <label for="name">Name</label>
+                <input type="text" name="SignName" id="Name" placeholder = "eg. Dion Lu">
+                
+            </div>
+            
+            <div class="form-element">
+            
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password">
+
+            </div>
+            
+            <div class="form-element">
+            
+                <label for="passwordConfirm">Confirm Password</label>
+                <input type="password" name="passwordConfirm" id="passwordConfirm">
+
+            </div>
+            
+            <div class="form-element">
+            	<input type = "hidden" name = "signUp" value = "1">
+            	
+                <input type="submit" id="submitButton" value="Sign Up!" name = "submit">
+
+            </div>
+            
+        </form>
+        
+        <form id = "loginWrapper" method = "post">
+            <div class="login-form-element">
+            
+                <label for="loginName">LoginName</label>
+                <input type="text" name="loginName" id="loginName">
+
+            </div>
+
+             <div class="login-form-element">
+            
+                <label for="loginPassword">Password</label>
+                <input type="password" name="loginPassword" id="loginPassword">
+
+            </div>
+
+            <div class="login-form-element">
+            	<input type="hidden" name = "signUp" value = "0">
+            	
+                <input type="submit" id="loginSubmit" name="submit" value="Log In!">
+
+            </div>
+
+        </form>
+          </div>
+		</div>
+        </div>
+        </div>
+      
+        <script type="text/javascript">
+            $("#signUp").click(function(){
+                $(".form-element").slideToggle("fast","linear");  
+            });
+
+            $("#logIn").click(function(){
+                
+                $(".login-form-element").slideToggle("fast","linear");
+            });      
+
+
+            function Emphasis(x){
+                x.style.fontSize = "100%";
+                x.style.color = "blue";
+
+            }
+
+            function Normal(x){
+                x.style.fontSize = "80%";
+                x.style.color = "black";
+            }
+            
+            function isEmail(email) {
+  
+                var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+  
+                return regex.test(email);
+                
+            }
+            
+            $("#submitButton").click(function() {
+                
+                var errorMessage = "";
+                var fieldsMissing = "";
+                
+                if ($("#email").val() == "") {
+                    
+                    fieldsMissing += "\nEmail";
+                    
+                }
+
+                
+                if ($("#password").val() == "") {
+                    
+                    fieldsMissing += "\nPassword";
+                    
+                }
+                
+                if ($("#passwordConfirm").val() == "") {
+                    
+                    fieldsMissing += "\nConfirm Password";
+                    
+                }
+                
+                if (fieldsMissing != "") {
+                    
+                    errorMessage += "\nThe following field(s) are missing:" + fieldsMissing;
+                    
+                }
+                
+                if ( $("#email").val() != ""){
+                    if (isEmail($("#email").val()) == false) {
+                    
+                        errorMessage += "\n\nYour email address is not valid";
+                    
+                    }
+                }      
+                
+                if ($("#password").val() != $("#passwordConfirm").val()) {
+                    
+                    errorMessage += "\n\nYour passwords don't match";
+                    
+                }
+                
+                if (errorMessage != "") {
+                    
+                    alert(errorMessage);
+                    
+                    
+                } else {
+                    
+                    $("#successMessage").show();
+                    $("#errorMessage").hide();
+                    
+                }
+
+                
+            });
+          
+          
+          
+          	 $("#loginSubmit").click(function() {             
+              	if ($('#loginName').val() == '' && $('#loginPassword').val() == ''){
+                	alert("Please enter login name and password");
+                }
+             });
+            
+            
+        </script>
+
+        
+        
+    </body>
+
+</html>

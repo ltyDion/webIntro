@@ -1,0 +1,82 @@
+<html>
+
+    <head>
+        
+        <title>jQuery</title>
+ 
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        
+        <style type="text/css">
+        
+            #circle {
+                
+                width: 150px;
+                height: 150px;
+                border-radius: 50%;
+                background-color: green;
+                margin: 10px;
+                
+            }
+            
+            .square {
+                
+                width: 150px;
+                height: 150px;
+                background-color: red;
+                margin: 10px;
+                
+            }
+        
+        
+        </style>
+        
+    </head>
+
+    <body>
+    	<div><input type = "button" value = "click to hide or show the circle" id = "toggleButton"></div>
+        
+       <div id="circle"></div> 
+       
+        
+        <div class="square" id = "hide"></div>
+        
+        <div class="square" id = "show"></div>
+        
+        <div id = "prompt"> This is bilibili.com, you can switch to Acfun by click the change button </div>
+        <iframe src="https://www.bilibili.com" width = 400 height = 500 id = "bilibili"></iframe>
+        
+        <script type="text/javascript">
+            
+            /*$("#circle").click(function() {
+                
+                alert("a circle was clicked!");
+                
+            });*/
+            
+            $("#toggleButton").click(function(){
+            	$("#circle").animate({width:"toggle",height:"toggle"}, 2000, function(){
+            	$("#circle").css("backgroundColor","yellow")} );
+            });
+                        
+            $("#hide").click(function(){
+                $("#circle").css("visibility","hidden");
+            });
+            
+            $("#show").click(function(){
+            	$("#circle").css("visibility", "visible");
+            });
+            
+            /*
+            $("#circle").hover(function(){
+                $("#prompt").html("This is now Acfun.com!");
+                $("iframe").attr("src" , "https://www.baidu.com");
+            });
+            
+            alert($("body").css("width"));
+            */
+        
+        </script>
+        
+    </body>
+
+</html>
